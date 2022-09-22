@@ -55,7 +55,6 @@ project "ProjectGenerator"
 		defines "CONFIG_RELEASE"
 
 	filter "configurations:Dist"
-		kind "WindowedApp"
 		runtime "Release"
 		optimize "Full"
 		symbols "Off"
