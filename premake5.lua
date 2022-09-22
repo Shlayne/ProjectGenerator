@@ -1,8 +1,8 @@
 include "Dependencies/premake/Custom/solutionitems.lua"
 
-workspace "__WORKSPACE_NAME__"
+workspace "ProjectGenerator"
 	architecture "x86_64"
-	startproject "__PROJECT_NAME__"
+	startproject "ProjectGenerator"
 
 	configurations { "Profile", "Debug", "Release", "Dist" }
 
@@ -37,4 +37,4 @@ include "Dependencies/premake/Custom/usestdpreproc.lua"
 include "Dependencies/Dependencies.lua"
 
 -- Add any projects here with 'include "__PROJECT_NAME__"'
-include "__PROJECT_NAME__"
+include "ProjectGenerator"
