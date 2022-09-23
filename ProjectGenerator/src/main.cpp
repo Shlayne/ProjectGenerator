@@ -18,6 +18,7 @@ enum class ReturnCode : int
 {
 	Success = 0,
 	ShowHelpMessage,
+	GitMissing,
 	GitHubCLIMissing,
 	FileAlreadyExists,
 	CouldntCreateDirectory,
@@ -25,6 +26,7 @@ enum class ReturnCode : int
 	CouldntCloneRepository,
 	CouldntReadFile,
 	CouldntWriteFile,
+	CouldntCommitToRepository,
 	CouldntGenerateProjects,
 	CouldntOpenVSSolution,
 };
@@ -51,6 +53,7 @@ int main(int argc, char** argv)
 		{
 			constexpr const char* errorMessages[]
 			{
+				"Must have git installed. Get it here: https://git-scm.com/downloads/",
 				"Must have GitHub CLI installed. Get it here: https://cli.github.com/",
 				"A file already exists at the project directory.",
 				"Couldn't create project directory.",
@@ -58,6 +61,7 @@ int main(int argc, char** argv)
 				"Couldn't clone repository.",
 				"Couldn't read file.",
 				"Couldn't write file.",
+				"Couldn't commit generated changes to the repository.",
 				"Couldn't generate projects.",
 				"Couldn't open Visual Studio solution.",
 			};
@@ -84,6 +88,8 @@ ReturnCode Run(int argc, const char* const* argv)
 		return ReturnCode::ShowHelpMessage;
 	else if (argc > 1)
 	{
+		if (system("git --help > " EMPTY_FILE " 2>&1"))
+			return ReturnCode::GitMissing;
 		if (system("gh > " EMPTY_FILE " 2>&1"))
 			return ReturnCode::GitHubCLIMissing;
 
@@ -177,9 +183,11 @@ ReturnCode Run(int argc, const char* const* argv)
 			rc = ReplaceOLCTemplateWithProjectNameInFiles(
 			{
 				projectDirectory / "Dependencies/Dependencies.lua",
+				projectDirectory / "README.md",
 				projectProjectSrcOLCTemplateH,
 				projectProjectSrcOLCTemplateCPP,
 				projectProjectSrcDirectory / "main.cpp"
+
 			}, argv[1]);
 			if (rc != ReturnCode::Success)
 				return rc;
@@ -188,6 +196,13 @@ ReturnCode Run(int argc, const char* const* argv)
 			std::filesystem::rename(projectProjectSrcOLCTemplateH, destName.replace_extension("h"), error);
 			std::filesystem::rename(projectProjectSrcOLCTemplateCPP, destName.replace_extension("cpp"), error);
 		}
+
+		// Commit the generated changes to the project's repository.
+		command = "pushd \"";
+		command.append(projectDirectory.string());
+		command.append("\" && git add -A && git commit -m \"Project Generation Commit.\" && git push && popd");
+		if (system(command.c_str()))
+			return ReturnCode::CouldntCommitToRepository;
 
 		// Call "GenerateProjects.bat" in the appropriate directory.
 		command = "pushd \"";
@@ -227,7 +242,8 @@ ReturnCode EditFile(const std::filesystem::path& filepath, const std::function<v
 	std::string file = inFileStream.str();
 	func(file);
 
-	std::ofstream outFile(filepath);
+	// Write binary data to not change line endings.
+	std::ofstream outFile(filepath, std::ofstream::binary);
 	if (!outFile.is_open())
 		return ReturnCode::CouldntWriteFile;
 
