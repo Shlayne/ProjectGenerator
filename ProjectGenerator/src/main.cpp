@@ -42,8 +42,8 @@ int main(int argc, char** argv)
 			rc = ReturnCode::Success;
 			std::cout << "Usage: " << argv[0] << " [<ProjectName> [options] | --help]\n\n";
 			std::cout << "Options:\n";
-			std::cout << "   --dir filepath   Set the directory of the project\n";
-			std::cout << "   --private        Make the project private\n";
+			std::cout << "   --dir filepath   Set the local directory of the project\n";
+			std::cout << "   --private        Make the project's repository private\n";
 			std::cout << "   --olc            Use OLCTemplate instead of ProjectTemplate\n";
 			std::cout << '\n';
 		}
