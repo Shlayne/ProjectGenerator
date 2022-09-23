@@ -18,7 +18,6 @@ enum class ReturnCode : int
 {
 	Success = 0,
 	ShowHelpMessage,
-	GitMissing,
 	GitHubCLIMissing,
 	FileAlreadyExists,
 	CouldntCreateDirectory,
@@ -26,7 +25,6 @@ enum class ReturnCode : int
 	CouldntCloneRepository,
 	CouldntReadFile,
 	CouldntWriteFile,
-	CouldntCommitToRepository,
 	CouldntGenerateProjects,
 	CouldntOpenVSSolution,
 };
@@ -53,7 +51,6 @@ int main(int argc, char** argv)
 		{
 			constexpr const char* errorMessages[]
 			{
-				"Must have git installed. Get it here: https://git-scm.com/downloads/",
 				"Must have GitHub CLI installed. Get it here: https://cli.github.com/",
 				"A file already exists at the project directory.",
 				"Couldn't create project directory.",
@@ -61,7 +58,6 @@ int main(int argc, char** argv)
 				"Couldn't clone repository.",
 				"Couldn't read file.",
 				"Couldn't write file.",
-				"Couldn't commit generated changes to the repository.",
 				"Couldn't generate projects.",
 				"Couldn't open Visual Studio solution.",
 			};
@@ -88,8 +84,6 @@ ReturnCode Run(int argc, const char* const* argv)
 		return ReturnCode::ShowHelpMessage;
 	else if (argc > 1)
 	{
-		if (system("git --help > " EMPTY_FILE " 2>&1"))
-			return ReturnCode::GitMissing;
 		if (system("gh > " EMPTY_FILE " 2>&1"))
 			return ReturnCode::GitHubCLIMissing;
 
@@ -194,10 +188,6 @@ ReturnCode Run(int argc, const char* const* argv)
 			std::filesystem::rename(projectProjectSrcOLCTemplateH, destName.replace_extension("h"), error);
 			std::filesystem::rename(projectProjectSrcOLCTemplateCPP, destName.replace_extension("cpp"), error);
 		}
-
-		command = "git add -A & git commit -m \"Project Generation Commit.\" & git push";
-		if (system(command.c_str()))
-			return ReturnCode::CouldntCommitToRepository;
 
 		// Call "GenerateProjects.bat" in the appropriate directory.
 		command = "pushd \"";
