@@ -77,6 +77,8 @@ static constexpr char prjName[] = "__PROJECT_NAME__";
 static constexpr auto prjNameLength = sizeof(prjName) / sizeof(*prjName) - 1;
 static constexpr char wksName[] = "__WORKSPACE_NAME__";
 static constexpr auto wksNameLength = sizeof(wksName) / sizeof(*wksName) - 1;
+static constexpr char pjtName[] = "ProjectTemplate";
+static constexpr auto pjtNameLength = sizeof(pjtName) / sizeof(*pjtName) - 1;
 
 ReturnCode EditFile(const std::filesystem::path& filepath, const std::function<void(std::string&)>& func);
 void ReplaceOLCTemplateWithProjectName(std::string& file, const char* arg1);
@@ -195,6 +197,16 @@ ReturnCode Run(int argc, const char* const* argv)
 			std::filesystem::path destName = projectProjectSrcDirectory / argv[1];
 			std::filesystem::rename(projectProjectSrcOLCTemplateH, destName.replace_extension("h"), error);
 			std::filesystem::rename(projectProjectSrcOLCTemplateCPP, destName.replace_extension("cpp"), error);
+		}
+		else
+		{
+			rc = EditFile(projectDirectory / "README.md",
+			[argv](std::string& file)
+			{
+					file.replace(file.find(pjtName), pjtNameLength, argv[1]); // todo test
+			});
+			if (rc != ReturnCode::Success)
+				return rc;
 		}
 
 		// Commit the generated changes to the project's repository.
