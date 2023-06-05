@@ -4,7 +4,7 @@ workspace "ProjectGenerator"
 	architecture "x86_64"
 	startproject "ProjectGenerator"
 
-	configurations { "Profile", "Debug", "Release", "Dist" }
+	configurations { "Debug", "Release", "Dist" }
 
 	solutionitems {
 		-- Visual Studio
