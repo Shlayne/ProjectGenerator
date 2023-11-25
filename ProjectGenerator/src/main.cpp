@@ -213,12 +213,12 @@ ReturnCode Run(int argc, const char* const argv[])
 		if (useOLCTemplate)
 		{
 			std::filesystem::path projectProjectSrcDirectory = projectProjectDirectory / "src";
-			std::filesystem::path projectProjectSrcOLCTemplateH = projectProjectSrcDirectory / "OLCTemplate.h";
+			std::filesystem::path projectProjectSrcOLCTemplateHPP = projectProjectSrcDirectory / "OLCTemplate.hpp";
 			std::filesystem::path projectProjectSrcOLCTemplateCPP = projectProjectSrcDirectory / "OLCTemplate.cpp";
 			rc = ReplaceOLCTemplateWithProjectNameInFiles(
 			{
 				projectDirectory / "README.md",
-				projectProjectSrcOLCTemplateH,
+				projectProjectSrcOLCTemplateHPP,
 				projectProjectSrcOLCTemplateCPP,
 				projectProjectSrcDirectory / "main.cpp"
 
@@ -226,7 +226,7 @@ ReturnCode Run(int argc, const char* const argv[])
 			if (rc != ReturnCode::Success) return rc;
 
 			std::filesystem::path destName = projectProjectSrcDirectory / argv[1];
-			std::filesystem::rename(projectProjectSrcOLCTemplateH, destName.replace_extension("h"), error);
+			std::filesystem::rename(projectProjectSrcOLCTemplateHPP, destName.replace_extension("hpp"), error);
 			if (error) return ReturnCode::CouldntRenameFile;
 			std::filesystem::rename(projectProjectSrcOLCTemplateCPP, destName.replace_extension("cpp"), error);
 			if (error) return ReturnCode::CouldntRenameFile;
