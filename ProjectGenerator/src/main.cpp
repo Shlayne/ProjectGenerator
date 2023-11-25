@@ -98,10 +98,10 @@ int main(int argc, char* argv[])
 	return rc;
 }
 
-static constexpr std::string_view olcName = "OLCTemplate";
 static constexpr std::string_view prjName = "__PROJECT_NAME__";
 static constexpr std::string_view wksName = "__WORKSPACE_NAME__";
 static constexpr std::string_view pjtName = "ProjectTemplate";
+static constexpr std::string_view olcName = "OLCTemplate";
 
 ReturnCode EditFile(const std::filesystem::path& filepath, const std::function<void(std::string&)>& func);
 void ReplaceAll(std::string& file, std::string_view replacee, std::string_view replacer);
@@ -172,43 +172,43 @@ ReturnCode Run(int argc, const char* const argv[])
 			return ReturnCode::CouldntCloneRepository;
 
 		std::filesystem::path projectProjectDirectory = projectDirectory / argv[1];
-		std::string_view templateProjectName = useOLCTemplate ? olcName : prjName;
 
 		// Rename the vs solution's project folder to <dir>/<ProjectName>/<ProjectName>.
-		std::filesystem::rename(projectDirectory / templateProjectName, projectProjectDirectory, error);
+		std::filesystem::rename(projectDirectory / prjName, projectProjectDirectory, error);
 		if (error) return ReturnCode::CouldntRenameFile;
 
 		ReturnCode rc = ReturnCode::Success;
 
 		// Rename the build script <dir>/<ProjectName>/Build<ProjectName>.lua.
 		std::filesystem::path projectProjectBuildScript = projectProjectDirectory / std::string("Build").append(argv[1]).append(".lua");
-		std::filesystem::rename(projectProjectDirectory / std::string("Build").append(templateProjectName).append(".lua"), projectProjectBuildScript, error);
+		std::filesystem::rename(projectProjectDirectory / std::string("Build").append(prjName).append(".lua"), projectProjectBuildScript, error);
 		if (error) return ReturnCode::CouldntRenameFile;
 
 		// Replace the first "__PROJECT_NAME__" in <dir>/<ProjectName>/<ProjectName>/Build<ProjectName>.lua with <ProjectName>.
 		rc = EditFile(projectProjectBuildScript,
-		[argv, templateProjectName](std::string& file)
+		[argv](std::string& file)
 		{
-			file.replace(file.find(templateProjectName), templateProjectName.size(), argv[1]);
+			file.replace(file.find(prjName), prjName.size(), argv[1]);
 		});
-		if (rc != ReturnCode::Success)
-			return rc;
+		if (rc != ReturnCode::Success) return rc;
 
 		rc = EditFile(projectDirectory / "BuildAll.lua",
-		[argv, useOLCTemplate](std::string& file)
+		[argv](std::string& file)
 		{
-			if (useOLCTemplate)
-				ReplaceAll(file, olcName, argv[1]);
-			else
-			{
-				// Replace "__WORKSPACE_NAME__" with <ProjectName>.
-				file.replace(file.find(wksName), wksName.size(), argv[1]);
-				// Replace all "__PROJECT_NAME__"'s in <dir>/<ProjectName>/BuildAll.lua with <ProjectName>.
-				ReplaceAll(file, prjName, argv[1]);
-			}
+			// Replace "__WORKSPACE_NAME__" with <ProjectName>.
+			file.replace(file.find(wksName), wksName.size(), argv[1]);
+			// Replace all "__PROJECT_NAME__"'s in <dir>/<ProjectName>/BuildAll.lua with <ProjectName>.
+			ReplaceAll(file, prjName, argv[1]);
 		});
-		if (rc != ReturnCode::Success)
-			return rc;
+		if (rc != ReturnCode::Success) return rc;
+
+		rc = EditFile(projectDirectory / "BuildDependencies.lua",
+		[argv](std::string& file)
+		{
+			// Replace the only "__PROJECT_NAME__" in <dir>/<ProjectName>/BuildDependencies.lua with <ProjectName>.
+			file.replace(file.find(prjName), prjName.size(), argv[1]);
+		});
+		if (rc != ReturnCode::Success) return rc;
 
 		if (useOLCTemplate)
 		{
@@ -217,19 +217,19 @@ ReturnCode Run(int argc, const char* const argv[])
 			std::filesystem::path projectProjectSrcOLCTemplateCPP = projectProjectSrcDirectory / "OLCTemplate.cpp";
 			rc = ReplaceOLCTemplateWithProjectNameInFiles(
 			{
-				projectDirectory / "Dependencies/Dependencies.lua",
 				projectDirectory / "README.md",
 				projectProjectSrcOLCTemplateH,
 				projectProjectSrcOLCTemplateCPP,
 				projectProjectSrcDirectory / "main.cpp"
 
 			}, argv[1]);
-			if (rc != ReturnCode::Success)
-				return rc;
+			if (rc != ReturnCode::Success) return rc;
 
 			std::filesystem::path destName = projectProjectSrcDirectory / argv[1];
 			std::filesystem::rename(projectProjectSrcOLCTemplateH, destName.replace_extension("h"), error);
+			if (error) return ReturnCode::CouldntRenameFile;
 			std::filesystem::rename(projectProjectSrcOLCTemplateCPP, destName.replace_extension("cpp"), error);
+			if (error) return ReturnCode::CouldntRenameFile;
 		}
 		else
 		{
@@ -238,16 +238,7 @@ ReturnCode Run(int argc, const char* const argv[])
 			{
 				file.replace(file.find(pjtName), pjtName.size(), argv[1]);
 			});
-			if (rc != ReturnCode::Success)
-				return rc;
-
-			rc = EditFile(projectDirectory / "BuildDependencies.lua",
-			[argv](std::string& file)
-			{
-				file.replace(file.find(prjName), prjName.size(), argv[1]);
-			});
-			if (rc != ReturnCode::Success)
-				return rc;
+			if (rc != ReturnCode::Success) return rc;
 		}
 
 		std::filesystem::current_path(projectDirectory, error);
